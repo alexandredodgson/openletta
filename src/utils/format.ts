@@ -11,12 +11,19 @@
  * - highlightCode(code, language) → syntax highlighted
  */
 
-// TODO Phase 1: implement renderMarkdown using marked + marked-terminal
-// import { marked } from 'marked';
-// import TerminalRenderer from 'marked-terminal';
+import { marked } from 'marked';
+import TerminalRenderer from 'marked-terminal';
+
+// Configure marked to use terminal renderer
+marked.setOptions({
+  renderer: new TerminalRenderer() as any,
+});
 
 export function renderMarkdown(text: string): string {
-  // Placeholder — for MVP, return text as-is
-  // Implement with marked-terminal for Phase 1 polish
-  return text;
+  try {
+    return marked.parse(text) as string;
+  } catch (error) {
+    // Fallback to raw text if parsing fails
+    return text;
+  }
 }
