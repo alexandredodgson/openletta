@@ -21,26 +21,128 @@
  * └──────────────────────────┘
  */
 
-import React from 'react';
-import { Box, Text } from 'ink';
+import React, { useState, useEffect } from 'react';
+import { Box, Text, useApp } from 'ink';
+import Conf from 'conf';
+import { ChatView, type Message } from './components/ChatView.js';
+import { InputBar } from './components/InputBar.js';
+import { StreamRenderer } from './components/StreamRenderer.js';
+import { StatusBar, type AppStatus } from './components/StatusBar.js';
+import { useLettaSession } from './hooks/useLettaSession.js';
+import { useStream } from './hooks/useStream.js';
 
-// TODO Phase 1: Build this out. Steps:
-//
-// 1. Import and use useLettaSession hook to create/resume a session
-// 2. Manage messages state: Array<{ role: 'user' | 'assistant', content: string }>
-// 3. Manage app status: 'idle' | 'thinking' | 'streaming'
-// 4. Wire InputBar → session.send() → useStream → ChatView
-// 5. Handle Ctrl+C via useApp().exit() + session.close()
-// 6. Persist agentId to local config (conf package) for resume on restart
-//
-// See SPEC.md for Letta SDK API details.
-// See ROADMAP.md for Phase 1 acceptance criteria.
+// Persistent config for agentId
+const config = new Conf({ projectName: 'openletta' });
 
 export function App(): React.ReactElement {
+  const { exit } = useApp();
+
+  // Load saved agentId from config
+  const savedAgentId = config.get('agentId') as string | undefined;
+
+  // Initialize session
+  const { session, agentId, isConnected, error: sessionError } = useLettaSession({
+    agentId: savedAgentId,
+  });
+
+  // Save agentId when it changes
+  useEffect(() => {
+    if (agentId) {
+      config.set('agentId', agentId);
+    }
+  }, [agentId]);
+
+  // Message history
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  // App status
+  const [status, setStatus] = useState<AppStatus>('idle');
+
+  // Stream management
+  const { streamContent, isStreaming, startStream } = useStream();
+
+  // Handle message submission
+  const handleSubmit = async (text: string) => {
+    if (!session || !isConnected) return;
+
+    // Add user message to history
+    setMessages((prev) => [...prev, { role: 'user', content: text }]);
+
+    // Start thinking
+    setStatus('thinking');
+
+    try {
+      // Send message to Letta
+      await session.send(text);
+
+      // Start streaming the response
+      setStatus('streaming');
+      const response = await startStream(session.stream());
+
+      // Add assistant message to history
+      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+
+      setStatus('idle');
+    } catch (err) {
+      setStatus('error');
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        },
+      ]);
+    }
+  };
+
+  // Handle Ctrl+C gracefully
+  useEffect(() => {
+    const cleanup = () => {
+      if (session) {
+        session.close();
+      }
+      exit();
+    };
+
+    // Note: Ink handles Ctrl+C automatically, but we want to clean up
+    process.on('SIGINT', cleanup);
+
+    return () => {
+      process.off('SIGINT', cleanup);
+    };
+  }, [session, exit]);
+
+  // Show error if session failed to initialize
+  if (sessionError) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Text color="red">Failed to initialize Letta session:</Text>
+        <Text>{sessionError}</Text>
+        <Text dimColor>Make sure Letta Code is installed and authenticated:</Text>
+        <Text dimColor>npm i -g @letta-ai/letta-code && letta</Text>
+      </Box>
+    );
+  }
+
+  // Show loading while connecting
+  if (!isConnected) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Text color="yellow">Connecting to Letta...</Text>
+      </Box>
+    );
+  }
+
   return (
-    <Box flexDirection="column">
-      <Text>OpenLetta — Phase 1 scaffold</Text>
-      <Text dimColor>This is the starting skeleton. Implement Phase 1 per ROADMAP.md.</Text>
+    <Box flexDirection="column" height="100%">
+      <StatusBar agentId={agentId} status={status} />
+
+      <Box flexDirection="column" flexGrow={1} padding={1}>
+        <ChatView messages={messages} />
+        <StreamRenderer content={streamContent} isStreaming={isStreaming} />
+      </Box>
+
+      <InputBar onSubmit={handleSubmit} disabled={status !== 'idle'} />
     </Box>
   );
 }

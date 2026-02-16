@@ -31,16 +31,65 @@
  * - Store agentId after first session creation for future resume
  */
 
-// TODO Phase 1: implement this hook
-// import { createSession, resumeSession } from '@letta-ai/letta-code-sdk';
+import { useEffect, useRef, useState } from 'react';
+import { createSession, resumeSession } from '@letta-ai/letta-code-sdk';
 
-export function useLettaSession(_options?: { agentId?: string }) {
-  // Placeholder — implement per the above spec
+type LettaSession = Awaited<ReturnType<typeof createSession>>;
+
+interface UseLettaSessionOptions {
+  agentId?: string;
+}
+
+export function useLettaSession(options?: UseLettaSessionOptions) {
+  const sessionRef = useRef<LettaSession | null>(null);
+  const [agentId, setAgentId] = useState<string | null>(options?.agentId ?? null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const initSession = async () => {
+      try {
+        // Create or resume session
+        const session = options?.agentId
+          ? await resumeSession(options.agentId)
+          : await createSession();
+
+        if (!mounted) {
+          session.close();
+          return;
+        }
+
+        sessionRef.current = session;
+        setAgentId(session.agentId);
+        setConversationId(session.conversationId);
+        setIsConnected(true);
+        setError(null);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err instanceof Error ? err.message : String(err));
+        setIsConnected(false);
+      }
+    };
+
+    initSession();
+
+    return () => {
+      mounted = false;
+      if (sessionRef.current) {
+        sessionRef.current.close();
+        sessionRef.current = null;
+      }
+    };
+  }, [options?.agentId]);
+
   return {
-    session: null,
-    agentId: null as string | null,
-    conversationId: null as string | null,
-    isConnected: false,
-    error: null as string | null,
+    session: sessionRef.current,
+    agentId,
+    conversationId,
+    isConnected,
+    error,
   };
 }

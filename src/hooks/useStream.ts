@@ -33,15 +33,68 @@
  * - For MVP, direct setState per token is fine
  */
 
-// TODO Phase 1: implement this hook
+import { useState, useRef } from 'react';
+
+interface SDKAssistantMessage {
+  type: 'assistant';
+  content: string;
+  uuid: string;
+}
+
+interface SDKResultMessage {
+  type: 'result';
+  success: boolean;
+  result?: string;
+  error?: string;
+  durationMs: number;
+  conversationId: string;
+}
+
+type SDKMessage = SDKAssistantMessage | SDKResultMessage;
 
 export function useStream() {
-  // Placeholder — implement per the above spec
+  const [streamContent, setStreamContent] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortRef = useRef(false);
+
+  const startStream = async (stream: AsyncIterable<SDKMessage>): Promise<string> => {
+    abortRef.current = false;
+    setIsStreaming(true);
+    setStreamContent('');
+
+    let fullContent = '';
+
+    try {
+      for await (const msg of stream) {
+        if (abortRef.current) break;
+
+        if (msg.type === 'assistant') {
+          fullContent += msg.content;
+          setStreamContent(fullContent);
+        } else if (msg.type === 'result') {
+          // Stream finished
+          setIsStreaming(false);
+          return fullContent;
+        }
+      }
+    } catch (error) {
+      setIsStreaming(false);
+      throw error;
+    }
+
+    setIsStreaming(false);
+    return fullContent;
+  };
+
+  const abortStream = () => {
+    abortRef.current = true;
+    setIsStreaming(false);
+  };
+
   return {
-    streamContent: '',
-    isStreaming: false,
-    startStream: async (_stream: AsyncIterable<unknown>): Promise<string> => {
-      return '';
-    },
+    streamContent,
+    isStreaming,
+    startStream,
+    abortStream,
   };
 }

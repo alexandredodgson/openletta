@@ -17,8 +17,8 @@
  * - Or use useInput hook for custom key handling
  */
 
-import React from 'react';
-import { Box, Text } from 'ink';
+import React, { useState } from 'react';
+import { Box, Text, useInput } from 'ink';
 
 interface InputBarProps {
   onSubmit: (text: string) => void;
@@ -26,10 +26,37 @@ interface InputBarProps {
 }
 
 export function InputBar({ onSubmit, disabled }: InputBarProps): React.ReactElement {
-  // TODO: implement with useInput or ink-text-input
+  const [input, setInput] = useState('');
+
+  useInput((inputChar, key) => {
+    if (disabled) return;
+
+    if (key.return) {
+      // Submit on Enter
+      if (input.trim()) {
+        onSubmit(input);
+        setInput('');
+      }
+    } else if (key.backspace || key.delete) {
+      // Handle backspace
+      setInput((prev) => prev.slice(0, -1));
+    } else if (!key.ctrl && !key.meta && inputChar) {
+      // Add character to input
+      setInput((prev) => prev + inputChar);
+    }
+  });
+
   return (
     <Box borderStyle="single" borderColor={disabled ? 'gray' : 'green'} paddingX={1}>
-      <Text dimColor={disabled}>{disabled ? 'Waiting for response...' : '> Type a message...'}</Text>
+      {disabled ? (
+        <Text dimColor>Waiting for response...</Text>
+      ) : (
+        <>
+          <Text color="cyan">&gt; </Text>
+          <Text>{input}</Text>
+          <Text color="gray">▊</Text>
+        </>
+      )}
     </Box>
   );
 }
