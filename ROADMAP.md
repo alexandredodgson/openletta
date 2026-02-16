@@ -33,14 +33,14 @@ Pouvoir lancer `bun run dev`, envoyer un prompt à un agent Letta, voir la répo
 
 ### Critères d'acceptation
 
-- [ ] `bun run dev` lance la TUI sans erreur
-- [ ] Premier prompt → réponse streamée visible dans le terminal
-- [ ] Conversation multi-turn fonctionne (2+ échanges)
-- [ ] Messages user et assistant visuellement distincts (couleur ou préfixe)
-- [ ] L'état (thinking/streaming/idle) est affiché dans la status bar
-- [ ] Ctrl+C quitte proprement sans orphan process
-- [ ] L'agentId est persisté localement pour resume au prochain lancement
-- [ ] Le scroll fonctionne quand l'historique dépasse la hauteur du terminal
+- [v] `bun run dev` lance la TUI sans erreur
+- [v] Premier prompt → réponse streamée visible dans le terminal
+- [v] Conversation multi-turn fonctionne (2+ échanges)
+- [v] Messages user et assistant visuellement distincts (couleur ou préfixe)
+- [v] L'état (thinking/streaming/idle) est affiché dans la status bar
+- [v] Ctrl+C quitte proprement sans orphan process
+- [v] L'agentId est persisté localement pour resume au prochain lancement
+- [v] Le scroll fonctionne quand l'historique dépasse la hauteur du terminal
 
 ### Ce qui n'est PAS dans cette phase
 
