@@ -1,19 +1,18 @@
-#!/usr/bin/env bun
-/**
- * OpenLetta CLI entry point.
- *
- * Usage:
- *   bun run src/cli.tsx
- *   openletta              (after global install)
- *   openletta --agent <id> (resume specific agent)
- *   openletta --new        (force new agent)
- */
-
 import { render } from 'ink';
 import React from 'react';
 import { App } from './App.js';
 
-// TODO Phase 1: parse CLI args (--agent, --new, --cwd)
-// For now, just launch the app with defaults.
+const args = process.argv.slice(2);
+let agentId: string | undefined;
+let forceNew = false;
 
-render(<App />);
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--agent' && i + 1 < args.length) {
+    agentId = args[i + 1];
+    i++;
+  } else if (args[i] === '--new') {
+    forceNew = true;
+  }
+}
+
+render(<App initialAgentId={agentId} forceNew={forceNew} />);

@@ -47,7 +47,7 @@ export function StatusBar({ agentId, status, error }: StatusBarProps): React.Rea
   return (
     <Box borderStyle="single" borderColor="gray" paddingX={1} justifyContent="space-between">
       <Text dimColor>
-        {agentId ? `🤖 ${agentId.slice(0, 16)}...` : '🤖 no agent'}
+        {agentId ? `🤖 ${agentId}` : '🤖 no agent'}
       </Text>
       <Text color={STATUS_COLORS[status]}>
         {STATUS_LABELS[status]}

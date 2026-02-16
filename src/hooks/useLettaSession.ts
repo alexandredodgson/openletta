@@ -57,6 +57,8 @@ export function useLettaSession(options?: UseLettaSessionOptions) {
           ? await resumeSession(options.agentId)
           : await createSession();
 
+        await session.initialize();
+
         if (!mounted) {
           session.close();
           return;

@@ -34,11 +34,16 @@ import { useStream } from './hooks/useStream.js';
 // Persistent config for agentId
 const config = new Conf({ projectName: 'openletta' });
 
-export function App(): React.ReactElement {
+interface AppProps {
+  initialAgentId?: string;
+  forceNew?: boolean;
+}
+
+export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement {
   const { exit } = useApp();
 
   // Load saved agentId from config
-  const savedAgentId = config.get('agentId') as string | undefined;
+  const savedAgentId = forceNew ? undefined : (initialAgentId || config.get('agentId') as string | undefined);
 
   // Initialize session
   const { session, agentId, isConnected, error: sessionError } = useLettaSession({
@@ -59,7 +64,7 @@ export function App(): React.ReactElement {
   const [status, setStatus] = useState<AppStatus>('idle');
 
   // Stream management
-  const { streamContent, isStreaming, startStream } = useStream();
+  const { streamContent, isStreaming, startStream, clearStream } = useStream();
 
   // Handle message submission
   const handleSubmit = async (text: string) => {
@@ -81,6 +86,7 @@ export function App(): React.ReactElement {
 
       // Add assistant message to history
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+      clearStream();
 
       setStatus('idle');
     } catch (err) {
