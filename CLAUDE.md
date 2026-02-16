@@ -66,7 +66,7 @@ Le Letta Code SDK fait **tout** le travail lourd. OpenLetta est **uniquement une
 
 ## Développement itératif
 
-Ce projet se construit **brique par brique**. Consulte `docs/PLAN.md` pour la progression des phases. On commence par la Phase 1 (chat basique + streaming). Ne jamais sauter de phase ni implémenter des features d'une phase ultérieure sans qu'on te le demande.
+Ce projet se construit **brique par brique**. Consulte `ROADMAP.md` pour la progression des phases. On commence par la Phase 1 (chat basique + streaming). Ne jamais sauter de phase ni implémenter des features d'une phase ultérieure sans qu'on te le demande.
 
 **Quand tu proposes une version à tester :**
 1. Assure-toi que ça compile (`bun run build`)
