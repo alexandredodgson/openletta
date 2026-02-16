@@ -24,10 +24,11 @@
     "conf": "^13.1.0"
   },
   "devDependencies": {
+    "@types/bun": "latest",
+    "@types/marked-terminal": "^6.1.1",
     "@types/react": "^18.3.0",
-    "typescript": "^5.8.0",
     "tsup": "^8.4.0",
-    "@types/bun": "latest"
+    "typescript": "^5.8.0"
   },
   "engines": {
     "bun": ">=1.0.0"

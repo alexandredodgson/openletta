@@ -21,6 +21,7 @@
  */
 
 import React from 'react';
+import { renderMarkdown } from '../utils/format.js';
 import { Box, Text } from 'ink';
 
 export interface Message {
@@ -41,7 +42,7 @@ export function ChatView({ messages }: ChatViewProps): React.ReactElement {
           <Text bold={msg.role === 'user'} color={msg.role === 'user' ? 'cyan' : undefined}>
             {msg.role === 'user' ? 'You > ' : '🤖 > '}
           </Text>
-          <Text>{msg.content}</Text>
+          <Text>{msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}</Text>
         </Box>
       ))}
     </Box>

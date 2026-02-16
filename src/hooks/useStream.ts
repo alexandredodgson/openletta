@@ -34,23 +34,8 @@
  */
 
 import { useState, useRef } from 'react';
+import type { SDKMessage } from '@letta-ai/letta-code-sdk';
 
-interface SDKAssistantMessage {
-  type: 'assistant';
-  content: string;
-  uuid: string;
-}
-
-interface SDKResultMessage {
-  type: 'result';
-  success: boolean;
-  result?: string;
-  error?: string;
-  durationMs: number;
-  conversationId: string;
-}
-
-type SDKMessage = SDKAssistantMessage | SDKResultMessage;
 
 export function useStream() {
   const [streamContent, setStreamContent] = useState('');
@@ -91,10 +76,14 @@ export function useStream() {
     setIsStreaming(false);
   };
 
+  const clearStream = () => {
+    setStreamContent("");
+  };
+
   return {
     streamContent,
     isStreaming,
     startStream,
-    abortStream,
+    abortStream, clearStream,
   };
 }

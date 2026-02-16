@@ -19,6 +19,7 @@
  */
 
 import React from 'react';
+import { renderMarkdown } from '../utils/format.js';
 import { Box, Text } from 'ink';
 
 interface StreamRendererProps {
@@ -33,7 +34,7 @@ export function StreamRenderer({ content, isStreaming }: StreamRendererProps): R
     <Box marginBottom={1}>
       <Text color="green">{'🤖 > '}</Text>
       <Text>
-        {content}
+        {renderMarkdown(content)}
         {isStreaming ? '▊' : ''}
       </Text>
     </Box>
