@@ -100,7 +100,14 @@ export interface DisplayMessage {
 export interface LettaSessionWrapper {
   agentId: string;
   conversationId: string;
-  send: (text: string) => Promise<void>;
+  send: (text: string, mode?: AppMode) => Promise<void>;
   stream: () => AsyncIterable<LettaMessage>;
   close: () => Promise<void>;
 }
+
+/**
+ * Application working modes
+ * - plan: Read-only mode (Plan)
+ * - build: Full access mode (Build)
+ */
+export type AppMode = 'plan' | 'build';

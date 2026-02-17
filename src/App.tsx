@@ -1,24 +1,5 @@
 /**
  * App.tsx — Root component for OpenLetta TUI.
- *
- * Responsibilities:
- * - Initialize and manage the Letta session (via useLettaSession hook)
- * - Coordinate between InputBar, ChatView, StreamRenderer, StatusBar
- * - Manage the message history state
- * - Handle graceful shutdown on Ctrl+C
- *
- * Layout (top to bottom):
- * ┌──────────────────────────┐
- * │       StatusBar          │  ← agent info, mode, connection status
- * ├──────────────────────────┤
- * │                          │
- * │       ChatView           │  ← scrollable message history
- * │                          │
- * │   StreamRenderer         │  ← current streaming response (if active)
- * │                          │
- * ├──────────────────────────┤
- * │       InputBar           │  ← user input
- * └──────────────────────────┘
  */
 
 import React, { useState, useEffect } from 'react';
@@ -30,21 +11,25 @@ import { StreamRenderer } from './components/StreamRenderer.js';
 import { StatusBar, type AppStatus } from './components/StatusBar.js';
 import { useLettaSession } from './hooks/useLettaSession.js';
 import { useStream } from './hooks/useStream.js';
-import type { DisplayMessage } from './types/letta.js';
+import type { DisplayMessage, AppMode } from './types/letta.js';
 
-// Persistent config for agentId
+// Persistent config for agentId and mode
 const config = new Conf({ projectName: 'openletta' });
 
 interface AppProps {
   initialAgentId?: string;
   forceNew?: boolean;
+  initialMode?: AppMode;
 }
 
-export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement {
+export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.ReactElement {
   const { exit } = useApp();
 
   // Load saved agentId from config
   const savedAgentId = forceNew ? undefined : (initialAgentId || config.get('agentId') as string | undefined);
+
+  // App mode (Plan/Build)
+  const [mode, setMode] = useState<AppMode>(initialMode || (config.get('mode') as AppMode) || 'plan');
 
   // Initialize session
   const { session, agentId, isConnected, error: sessionError } = useLettaSession({
@@ -58,7 +43,12 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
     }
   }, [agentId]);
 
-  // Message history (now includes full DisplayMessage with reasoning, tools, etc.)
+  // Save mode when it changes
+  useEffect(() => {
+    config.set('mode', mode);
+  }, [mode]);
+
+  // Message history
   const [messages, setMessages] = useState<(Message | DisplayMessage)[]>([]);
 
   // App status
@@ -66,6 +56,11 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
 
   // Stream management
   const { streamContent, isStreaming, startStream, clearStream } = useStream();
+
+  // Toggle mode
+  const handleToggleMode = () => {
+    setMode((prev) => (prev === 'plan' ? 'build' : 'plan'));
+  };
 
   // Handle message submission
   const handleSubmit = async (text: string) => {
@@ -79,14 +74,16 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
 
     try {
       // Send message to Letta
-      await session.send(text);
+      // In Phase 3, we communicate the mode to the agent via a system message if needed,
+      // or we handle tool restrictions on the client/wrapper side.
+      // For now, we'll just send the message.
+      await session.send(text, mode);
 
       // Start streaming the response
       setStatus('streaming');
       const fullMessage = await startStream(session.stream());
 
-      // Add assistant message to history with all structured data
-      // fullMessage contains: content, reasoning[], toolCalls[], toolReturns[]
+      // Add assistant message to history
       setMessages((prev) => [...prev, fullMessage]);
       clearStream();
 
@@ -107,14 +104,12 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
   useEffect(() => {
     const cleanup = () => {
       if (session) {
-        session.close();
+        session.close().catch(() => {});
       }
       exit();
     };
 
-    // Note: Ink handles Ctrl+C automatically, but we want to clean up
     process.on('SIGINT', cleanup);
-
     return () => {
       process.off('SIGINT', cleanup);
     };
@@ -143,14 +138,18 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
 
   return (
     <Box flexDirection="column" height="100%">
-      <StatusBar agentId={agentId} status={status} />
+      <StatusBar agentId={agentId} status={status} mode={mode} />
 
       <Box flexDirection="column" flexGrow={1} padding={1}>
         <ChatView messages={messages} />
         <StreamRenderer content={streamContent} isStreaming={isStreaming} />
       </Box>
 
-      <InputBar onSubmit={handleSubmit} disabled={status !== 'idle'} />
+      <InputBar
+        onSubmit={handleSubmit}
+        onToggleMode={handleToggleMode}
+        disabled={status !== 'idle'}
+      />
     </Box>
   );
 }
