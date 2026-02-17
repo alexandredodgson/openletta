@@ -876,8 +876,8 @@
       head -30)
   ⎿  /bin/bash: line 1: : command not found
 
-❯ et mon api letta au cas ou sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE 
-  1NGIwZTkzOmE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw==             
+❯ et mon api letta au cas ou [REDACTED]
+  [REDACTED]
 
 ● Parfait ! Tu as une clé API Letta. Maintenant je vais implémenter le vrai
   client Letta Code dans useLettaSession.ts :
@@ -1112,8 +1112,8 @@
 
 ● Write(.env.local)
   ⎿  Wrote 2 lines to .env.local
-      1 LETTA_API_KEY=sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIw
-        ZTkzOmE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw==
+      1 LETTA_API_KEY=[REDACTED]
+        [REDACTED]
 
 ● ✅ Créé ! Maintenant teste la compilation :
 
@@ -1237,8 +1237,8 @@
   l'environnement et tester :
 
 ● Bash(export BUN="$HOME/.bun/bin/bun" && export
-      LETTA_API_KEY="sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzOmE0
-      MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3…)
+      LETTA_API_KEY="[REDACTED]
+      [REDACTED])
   ⎿  timeout: failed to run command ‘’: No such file or directory
 
 ● Il y a un problème avec l'export de BUN. Essayons différemment :
@@ -1524,8 +1524,8 @@
 
   Pour tester maintenant :
 
-  export LETTA_API_KEY="sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzO
-  mE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw=="
+  export LETTA_API_KEY="[REDACTED]
+  [REDACTED]"
   ~/.bun/bin/bun run dev
 
 
@@ -1774,8 +1774,8 @@
 
   Pour tester maintenant en live :
 
-  export LETTA_API_KEY="sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzO
-  mE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw=="
+  export LETTA_API_KEY="[REDACTED]
+  [REDACTED]"
   cd /home/alexandredodgson/openletta
   ~/.bun/bin/bun run dev
 
