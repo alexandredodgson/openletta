@@ -3,7 +3,7 @@
  */
 
 export interface CommandAction {
-  type: 'agent' | 'session' | 'memory' | 'config' | 'help' | 'export' | 'unknown';
+  type: 'agent' | 'session' | 'memory' | 'config' | 'help' | 'export' | 'openinweb' | 'unknown';
   payload?: string;
 }
 
@@ -28,6 +28,8 @@ export function parseCommand(text: string): CommandAction {
       return { type: 'help' };
     case '/export':
       return { type: 'export' };
+    case '/openinweb':
+      return { type: 'openinweb' };
     default:
       return { type: 'unknown' };
   }
@@ -44,6 +46,7 @@ Available Commands:
   /memory        - Show current agent core memory
   /config        - Show current session configuration
   /export        - Export chat history to chat-export.json
+  /openinweb     - Open the web interface
   /help          - Show this help message
 
 Keyboard Shortcuts:

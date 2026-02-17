@@ -2,10 +2,11 @@
  * App.tsx — Root component for OpenLetta TUI.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
 import Conf from 'conf';
 import fs from 'fs';
+import path from 'path';
 import { ChatView, type Message } from './components/ChatView.js';
 import { InputBar } from './components/InputBar.js';
 import { StreamRenderer } from './components/StreamRenderer.js';
@@ -16,6 +17,7 @@ import { parseCommand, getHelpText } from './utils/commands.js';
 import { useLettaSession } from './hooks/useLettaSession.js';
 import { useStream } from './hooks/useStream.js';
 import { aggregateMessages } from './utils/letta.js';
+import { WebServer } from './utils/webServer.js';
 import type { DisplayMessage, AppMode, Agent, Conversation } from './types/letta.js';
 
 // Persistent config
@@ -49,6 +51,10 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
     agentId: currentAgentId,
   });
 
+  // Web Server state
+  const webServerRef = useRef<WebServer | null>(null);
+  const [isWebOpen, setIsWebOpen] = useState(false);
+
   // Sync agentId from session
   useEffect(() => {
     if (agentId) {
@@ -81,6 +87,23 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
 
   // Stream management
   const { streamContent, isStreaming, startStream, clearStream } = useStream();
+
+  // Sync state with web server
+  useEffect(() => {
+    if (webServerRef.current) {
+      webServerRef.current.setState({
+        agents,
+        conversations,
+        messages,
+        selectedAgentId: currentAgentId,
+        selectedConversationId: currentConversationId,
+        mode,
+        status,
+        isStreaming,
+        streamContent
+      });
+    }
+  }, [agents, conversations, messages, currentAgentId, currentConversationId, mode, status, isStreaming, streamContent]);
 
   // Focus management
   useInput((input, key) => {
@@ -165,6 +188,30 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
             setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: 'Chat history exported to chat-export.json' }]);
           } catch (e) {
             setMessages(prev => [...prev, { role: 'assistant', content: `Failed to export: ${e}` }]);
+          }
+          setStatus('idle');
+          return;
+        case 'openinweb':
+          if (isWebOpen) {
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Web interface is already running.' }]);
+            return;
+          }
+          setStatus('processing');
+          try {
+            const server = new WebServer({
+              port: 3000,
+              staticPath: path.resolve(process.cwd(), 'public')
+            });
+
+            server.on('chat:send', (msg) => handleSubmit(msg));
+            server.on('agent:select', (id) => handleSelectAgent(id));
+
+            await server.start();
+            webServerRef.current = server;
+            setIsWebOpen(true);
+            setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: 'Web interface started at http://localhost:3000' }]);
+          } catch (e) {
+             setMessages(prev => [...prev, { role: 'assistant', content: `Failed to start web server: ${e}` }]);
           }
           setStatus('idle');
           return;
