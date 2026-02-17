@@ -30,6 +30,7 @@ import { StreamRenderer } from './components/StreamRenderer.js';
 import { StatusBar, type AppStatus } from './components/StatusBar.js';
 import { useLettaSession } from './hooks/useLettaSession.js';
 import { useStream } from './hooks/useStream.js';
+import type { DisplayMessage } from './types/letta.js';
 
 // Persistent config for agentId
 const config = new Conf({ projectName: 'openletta' });
@@ -57,8 +58,8 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
     }
   }, [agentId]);
 
-  // Message history
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Message history (now includes full DisplayMessage with reasoning, tools, etc.)
+  const [messages, setMessages] = useState<(Message | DisplayMessage)[]>([]);
 
   // App status
   const [status, setStatus] = useState<AppStatus>('idle');
@@ -82,10 +83,11 @@ export function App({ initialAgentId, forceNew }: AppProps): React.ReactElement 
 
       // Start streaming the response
       setStatus('streaming');
-      const response = await startStream(session.stream());
+      const fullMessage = await startStream(session.stream());
 
-      // Add assistant message to history
-      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+      // Add assistant message to history with all structured data
+      // fullMessage contains: content, reasoning[], toolCalls[], toolReturns[]
+      setMessages((prev) => [...prev, fullMessage]);
       clearStream();
 
       setStatus('idle');
