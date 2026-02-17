@@ -1,12 +1,8 @@
-/**
- * useLettaSession.ts — React hook to manage a Letta Code session.
- */
-
-import { useEffect, useRef, useState } from 'react';
-import type { LettaSessionWrapper, LettaMessage, AppMode, ToolCallMessage, Agent, Conversation } from '../types/letta.js';
+import { useRef, useState, useEffect } from 'react';
+import type { LettaMessage, AppMode, Agent, Conversation, LettaSessionWrapper } from '../types/letta.js';
 
 /**
- * Session wrapper that bridges Letta Code client API with UI requirements
+ * createSessionWrapper - Factory for LettaSessionWrapper.
  */
 async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapper> {
   const { Letta } = await import('@letta-ai/letta-client') as any;
@@ -192,6 +188,17 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
       } catch (e) {
         console.error('Failed to get history:', e);
         return [];
+      }
+    },
+
+    getMemory: async () => {
+      try {
+        if (!currentAgentId) return 'No agent connected.';
+        const agent = await client.agents.retrieve(currentAgentId);
+        return JSON.stringify(agent.memory || agent.core_memory || {}, null, 2);
+      } catch (e) {
+        console.error('Failed to get memory:', e);
+        return 'Failed to retrieve memory.';
       }
     },
 

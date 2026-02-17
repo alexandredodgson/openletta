@@ -5,11 +5,14 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
 import Conf from 'conf';
+import fs from 'fs';
 import { ChatView, type Message } from './components/ChatView.js';
 import { InputBar } from './components/InputBar.js';
 import { StreamRenderer } from './components/StreamRenderer.js';
 import { StatusBar, type AppStatus } from './components/StatusBar.js';
 import { Sidebar } from './components/Sidebar.js';
+import { processFileReferences } from './utils/files.js';
+import { parseCommand, getHelpText } from './utils/commands.js';
 import { useLettaSession } from './hooks/useLettaSession.js';
 import { useStream } from './hooks/useStream.js';
 import { aggregateMessages } from './utils/letta.js';
@@ -94,7 +97,7 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
   // Handle agent switch
   const handleSelectAgent = async (id: string) => {
     if (!session) return;
-    setStatus('thinking');
+    setStatus('processing');
     setCurrentAgentId(id);
     config.set('agentId', id);
     const history = await session.getHistory(id, 'default');
@@ -107,7 +110,7 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
   // Handle conversation switch
   const handleSelectConversation = async (id: string) => {
     if (!session) return;
-    setStatus('thinking');
+    setStatus('processing');
     setCurrentConversationId(id);
     config.set('conversationId', id);
     const history = await session.getHistory(currentAgentId, id);
@@ -119,11 +122,68 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
   const handleSubmit = async (text: string) => {
     if (!session || !isConnected) return;
 
-    setMessages((prev) => [...prev, { role: 'user', content: text }]);
-    setStatus('thinking');
+    if (text.startsWith('/')) {
+      const action = parseCommand(text);
+
+      switch (action.type) {
+        case 'help':
+          setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: getHelpText() }]);
+          return;
+        case 'agent':
+          if (action.payload) {
+            handleSelectAgent(action.payload);
+          } else {
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Usage: /agent <id>' }]);
+          }
+          return;
+        case 'session':
+          if (action.payload) {
+            handleSelectConversation(action.payload);
+          } else {
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Usage: /session <id>' }]);
+          }
+          return;
+        case 'memory':
+          setStatus('processing');
+          const memory = await session.getMemory();
+          setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: `Current Memory:\n\`\`\`json\n${memory}\n\`\`\`` }]);
+          setStatus('idle');
+          return;
+        case 'config':
+          const confStr = JSON.stringify({
+            agentId: currentAgentId,
+            conversationId: currentConversationId,
+            mode: mode,
+            path: config.path
+          }, null, 2);
+          setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: `Current Config:\n\`\`\`json\n${confStr}\n\`\`\`` }]);
+          return;
+        case 'export':
+          setStatus('processing');
+          try {
+            fs.writeFileSync('chat-export.json', JSON.stringify(messages, null, 2));
+            setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'assistant', content: 'Chat history exported to chat-export.json' }]);
+          } catch (e) {
+            setMessages(prev => [...prev, { role: 'assistant', content: `Failed to export: ${e}` }]);
+          }
+          setStatus('idle');
+          return;
+        default:
+          setMessages(prev => [...prev, { role: 'assistant', content: `Unknown command: ${text}. Type /help for assistance.` }]);
+          return;
+      }
+    }
+
+    setStatus('processing');
 
     try {
-      await session.send(text, mode);
+      // Phase 5: File Referencing (@)
+      const processedText = await processFileReferences(text);
+
+      setMessages((prev) => [...prev, { role: 'user', content: text }]);
+
+      setStatus('thinking');
+      await session.send(processedText, mode);
       setStatus('streaming');
       const fullMessage = await startStream(session.stream(mode));
       setMessages((prev) => [...prev, fullMessage]);
