@@ -87,8 +87,9 @@ export function Sidebar({
         );
       })}
 
-      <Box marginTop="auto">
-        <Text dimColor size="small">
+      <Box flexGrow={1} />
+      <Box>
+        <Text dimColor>
           {isFocused ? 'Arrows to navigate\nEnter to select' : 'Ctrl+S to focus'}
         </Text>
       </Box>

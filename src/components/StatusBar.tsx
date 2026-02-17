@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import type { AppMode } from '../types/letta.js';
 
-export type AppStatus = 'idle' | 'thinking' | 'streaming' | 'error';
+export type AppStatus = 'idle' | 'thinking' | 'streaming' | 'error' | 'processing';
 
 interface StatusBarProps {
   agentId: string | null;
@@ -20,6 +20,7 @@ const STATUS_COLORS: Record<AppStatus, string> = {
   thinking: 'yellow',
   streaming: 'green',
   error: 'red',
+  processing: 'cyan',
 };
 
 const STATUS_LABELS: Record<AppStatus, string> = {
@@ -27,6 +28,7 @@ const STATUS_LABELS: Record<AppStatus, string> = {
   thinking: '◉ thinking',
   streaming: '◉ streaming',
   error: '✖ error',
+  processing: '◈ processing',
 };
 
 export function StatusBar({ agentId, status, mode, error }: StatusBarProps): React.ReactElement {

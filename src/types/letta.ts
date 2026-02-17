@@ -121,6 +121,7 @@ export interface LettaSessionWrapper {
   listAgents: () => Promise<Agent[]>;
   listConversations: (agentId: string) => Promise<Conversation[]>;
   getHistory: (agentId: string, conversationId?: string) => Promise<LettaMessage[]>;
+  getMemory: () => Promise<string>;
   close: () => Promise<void>;
 }
 
