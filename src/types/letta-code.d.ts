@@ -9,15 +9,23 @@ declare module '@letta-ai/letta-client' {
     agents: {
       list: () => Promise<Array<{ id: string; name: string }>>;
       create: (options: { name: string }) => Promise<{ id: string; name: string }>;
+      retrieve: (agentId: string) => Promise<any>;
+      update: (agentId: string, options: any) => Promise<any>;
+      tools: {
+        updateApproval: (toolName: string, options: any) => Promise<any>;
+      };
+      messages: {
+        list: (agentId: string, params?: any) => Promise<any[]>;
+        create: (agentId: string, options: any) => Promise<any>;
+        stream: (agentId: string) => Promise<AsyncIterable<any>>;
+      };
     };
-    messages?: {
-      create?: (agentId: string, options: unknown) => Promise<unknown>;
-      stream?: (agentId: string) => Promise<AsyncIterable<unknown>>;
+    groups?: {
+      list?: () => Promise<any[]>;
+      create?: (options: any) => Promise<any>;
     };
     message?: {
-      send?: (agentId: string, text: string) => Promise<unknown>;
-      stream?: (agentId: string) => Promise<AsyncIterable<unknown>>;
+      send?: (agentId: string, text: string) => Promise<any>;
     };
-    stream?: (agentId: string, conversationId: string) => Promise<AsyncIterable<unknown>>;
   }
 }

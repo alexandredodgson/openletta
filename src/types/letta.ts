@@ -3,6 +3,22 @@
  */
 
 /**
+ * Agent metadata
+ */
+export interface Agent {
+  id: string;
+  name: string;
+}
+
+/**
+ * Conversation (Group of messages)
+ */
+export interface Conversation {
+  id: string;
+  name?: string;
+}
+
+/**
  * Tool call details with execution metadata
  */
 export interface ToolCallMessage {
@@ -101,7 +117,10 @@ export interface LettaSessionWrapper {
   conversationId: string;
   send: (text: string, mode?: AppMode) => Promise<void>;
   updateMode: (mode: AppMode) => Promise<void>;
-  stream: (mode?: AppMode) => AsyncIterable<LettaMessage>; // Updated to accept mode
+  stream: (mode?: AppMode) => AsyncIterable<LettaMessage>;
+  listAgents: () => Promise<Agent[]>;
+  listConversations: (agentId: string) => Promise<Conversation[]>;
+  getHistory: (agentId: string, conversationId?: string) => Promise<LettaMessage[]>;
   close: () => Promise<void>;
 }
 

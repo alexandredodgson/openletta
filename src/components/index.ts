@@ -4,3 +4,4 @@ export { InputBar } from './InputBar.js';
 export { StreamRenderer } from './StreamRenderer.js';
 export { StatusBar } from './StatusBar.js';
 export type { AppStatus } from './StatusBar.js';
+export * from './Sidebar.js';
