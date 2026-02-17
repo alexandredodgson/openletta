@@ -1,8 +1,5 @@
 /**
  * letta.ts — TypeScript type definitions for Letta messages
- *
- * Centralizes all message types from Letta Code streaming API.
- * These enable type-safe handling of all message variants.
  */
 
 /**
@@ -12,6 +9,8 @@ export interface ToolCallMessage {
   tool_call_id: string;
   tool_name: string;
   arguments: Record<string, unknown>;
+  isBlocked?: boolean; // Phase 3: Flag for restricted tools in Plan mode
+  blockReason?: string; // Phase 3: Reason for blocking
 }
 
 /**
@@ -101,7 +100,8 @@ export interface LettaSessionWrapper {
   agentId: string;
   conversationId: string;
   send: (text: string, mode?: AppMode) => Promise<void>;
-  stream: () => AsyncIterable<LettaMessage>;
+  updateMode: (mode: AppMode) => Promise<void>;
+  stream: (mode?: AppMode) => AsyncIterable<LettaMessage>; // Updated to accept mode
   close: () => Promise<void>;
 }
 

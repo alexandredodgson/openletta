@@ -1,25 +1,8 @@
 /**
  * StatusBar.tsx — Bottom status bar showing agent info and current state.
- *
- * Props:
- * - agentId: string | null — current agent ID
- * - status: 'idle' | 'thinking' | 'streaming' | 'error'
- * - mode: AppMode — current working mode (plan | build)
- * - error?: string — error message if status === 'error'
- *
- * Layout:
- * ┌──────────────────────────────────────────────────┐
- * │ 🤖 agent-abc123  BUILD │ ● streaming │ OpenLetta │
- * └──────────────────────────────────────────────────┘
- *
- * Colors:
- * - idle: gray
- * - thinking: yellow
- * - streaming: green
- * - error: red
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import type { AppMode } from '../types/letta.js';
 
@@ -47,16 +30,31 @@ const STATUS_LABELS: Record<AppStatus, string> = {
 };
 
 export function StatusBar({ agentId, status, mode, error }: StatusBarProps): React.ReactElement {
+  const [flash, setFlash] = useState(false);
+
+  // Simple animation: flash the mode when it changes
+  useEffect(() => {
+    setFlash(true);
+    const timer = setTimeout(() => setFlash(false), 800);
+    return () => clearTimeout(timer);
+  }, [mode]);
+
   return (
-    <Box borderStyle="single" borderColor="gray" paddingX={1} justifyContent="space-between">
+    <Box borderStyle="single" borderColor={flash ? 'yellow' : 'gray'} paddingX={1} justifyContent="space-between">
       <Box>
         <Text dimColor>
           {agentId ? `🤖 ${agentId}` : '🤖 no agent'}
         </Text>
         <Box marginLeft={2}>
-          <Text bold color={mode === 'build' ? 'red' : 'blue'}>
-            {mode.toUpperCase()}
-          </Text>
+          {flash ? (
+            <Text bold color="yellow" inverse>
+              {` SWITCHING TO ${mode.toUpperCase()} `}
+            </Text>
+          ) : (
+            <Text bold color={mode === 'build' ? 'red' : 'blue'}>
+              {mode.toUpperCase()}
+            </Text>
+          )}
         </Box>
       </Box>
 

@@ -43,10 +43,15 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
     }
   }, [agentId]);
 
-  // Save mode when it changes
+  // Save mode when it changes and update session
   useEffect(() => {
     config.set('mode', mode);
-  }, [mode]);
+    if (session && isConnected) {
+      session.updateMode(mode).catch(err => {
+        console.error('Failed to update session mode:', err);
+      });
+    }
+  }, [mode, session, isConnected]);
 
   // Message history
   const [messages, setMessages] = useState<(Message | DisplayMessage)[]>([]);
@@ -74,14 +79,11 @@ export function App({ initialAgentId, forceNew, initialMode }: AppProps): React.
 
     try {
       // Send message to Letta
-      // In Phase 3, we communicate the mode to the agent via a system message if needed,
-      // or we handle tool restrictions on the client/wrapper side.
-      // For now, we'll just send the message.
       await session.send(text, mode);
 
       // Start streaming the response
       setStatus('streaming');
-      const fullMessage = await startStream(session.stream());
+      const fullMessage = await startStream(session.stream(mode));
 
       // Add assistant message to history
       setMessages((prev) => [...prev, fullMessage]);
