@@ -14,7 +14,7 @@ OpenLetta Phase 2 is now fully integrated with Letta Code API. The application s
 Your API key is stored in `.env.local`:
 
 ```bash
-LETTA_API_KEY=sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzOmE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw==
+LETTA_API_KEY=YOUR_API_KEY_HERE
 ```
 
 **⚠️ IMPORTANT**: This file contains your API key. Do NOT commit it to git. It's already in `.gitignore`.
@@ -26,7 +26,7 @@ LETTA_API_KEY=sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzOmE0MTVlZjN
 cd /home/alexandredodgson/openletta
 
 # Load the API key and run
-export LETTA_API_KEY="sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzOmE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw=="
+export LETTA_API_KEY="YOUR_API_KEY_HERE"
 ~/.bun/bin/bun run dev
 ```
 
@@ -34,7 +34,7 @@ Or, more conveniently, create a run script:
 
 ```bash
 #!/bin/bash
-export LETTA_API_KEY="sk-let-YTM4ZjUzYzktMjBkYi00MDkzLThhYzUtYjRjYWE1NGIwZTkzOmE0MTVlZjNiLTdjYjUtNGQxYy1iZTcxLTgyY2RlMDU0MDI3Yw=="
+export LETTA_API_KEY="YOUR_API_KEY_HERE"
 cd /home/alexandredodgson/openletta
 ~/.bun/bin/bun run dev
 ```
