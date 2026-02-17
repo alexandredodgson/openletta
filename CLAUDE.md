@@ -67,6 +67,13 @@ Letta Code fait **tout** le travail lourd. OpenLetta est **uniquement une couche
 └──────────────────────────────────────────┘
 ```
 
+## Mode Planning & Documentation (Context7)
+
+Avant de commencer toute tâche de développement, l'agent DOIT impérativement :
+1. Consulter le fichier `docs/SKILLS.md` pour identifier les bibliothèques et concepts concernés.
+2. Utiliser le MCP **Context7** (`resolve-library-id` puis `get-library-docs`) pour récupérer la documentation et les exemples de code les plus récents pour ces outils.
+3. Intégrer ces informations dans sa phase de planning avant de modifier le code.
+
 ### Workflow de développement
 
 1. Toujours lancer `bun run dev` pour tester les changements
@@ -98,6 +105,7 @@ Ce projet se construit **brique par brique**. Consulte `ROADMAP.md` pour la prog
 - `ROADMAP.md` — Progression par phase
 - `SPEC.md` — Spécifications techniques et types
 - `docs/MESSAGE_TYPES.md` — Types de messages Letta (Phase 2+)
+- `docs/SKILLS.md` — Référentiel de compétences et IDs Context7
 
 ## Commandes
 
