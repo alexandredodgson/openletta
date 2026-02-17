@@ -87,11 +87,15 @@ Ce roadmap détaille la construction progressive d'OpenLetta, de la TUI basique 
 - [x] ✅ Rapprochement : fondation solide pour les phases suivantes
 - [x] ⚠️ Écart identifié : nécessite migration vers `@letta-ai/letta-client` pour Phase 2
 
-**Pré-requis Phase 2**
+**Pré-requis Phase 2** ✅ EN COURS
 - [x] Phase 1 terminée et validée
-- [ ] Migration vers `@letta-ai/letta-client` pour accéder aux `tool_call_message`
-- [ ] Étude des types de messages Letta Server (reasoning, tool_call, tool_return)
-- [ ] Design des composants de rendu d'outils (ToolCallCard, BashOutput, FileDiff)
+- [x] Migration vers `@letta-ai/letta-code` pour accéder aux types complets
+- [x] Étude des types de messages Letta Server (reasoning, tool_call, tool_return)
+- [x] Design des composants de rendu d'outils (ToolCallCard, BashOutput, FileDiff)
+- [x] Types centralisés dans `src/types/letta.ts`
+- [x] useStream étendu pour capturer tous les types
+- [x] ChatView avec placeholders pour Phase 2
+- [x] Documentation des types de messages (MESSAGE_TYPES.md)
 
 ---
 

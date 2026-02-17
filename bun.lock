@@ -1,10 +1,11 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "openletta",
       "dependencies": {
-        "@letta-ai/letta-code-sdk": "latest",
+        "@letta-ai/letta-code": "latest",
         "chalk": "^5.4.1",
         "cli-highlight": "^2.1.11",
         "conf": "^13.1.0",
@@ -143,9 +144,7 @@
 
     "@letta-ai/letta-client": ["@letta-ai/letta-client@1.7.8", "", {}, "sha512-l7BGsAZOI8b+H1RO2IMzMv3P0VXj6Of2wXLCg5LZejOk0dHLLBi2me4WspLg+6zWPGIRJwMRsxmfp4kV9Zzh6g=="],
 
-    "@letta-ai/letta-code": ["@letta-ai/letta-code@0.14.16", "", { "dependencies": { "@letta-ai/letta-client": "^1.7.8", "glob": "^13.0.0", "ink-link": "^5.0.0", "open": "^10.2.0", "sharp": "^0.34.5" }, "optionalDependencies": { "@vscode/ripgrep": "^1.17.0" }, "bin": { "letta": "letta.js" } }, "sha512-4tl0QjA9AxZuk3phZPIfmzEM4TF0axfJpChbfXH31izsYOU+06iHK4cKNMM13E66hKg6Uz61RgO5mXJJEMZJLg=="],
-
-    "@letta-ai/letta-code-sdk": ["@letta-ai/letta-code-sdk@0.0.6", "", { "dependencies": { "@letta-ai/letta-code": "0.14.16" } }, "sha512-zW3sWaCYNH8tqiNrXVpfJezrjG3q18RgfpYeCU8e2f67UOB0YOgW1uY/BV/iQ9w4u5TSEfswU7G3dww5tGTRLQ=="],
+    "@letta-ai/letta-code": ["@letta-ai/letta-code@0.15.2", "", { "dependencies": { "@letta-ai/letta-client": "^1.7.8", "glob": "^13.0.0", "ink-link": "^5.0.0", "open": "^10.2.0", "sharp": "^0.34.5" }, "optionalDependencies": { "@vscode/ripgrep": "^1.17.0" }, "bin": { "letta": "letta.js" } }, "sha512-ESG19EIXxsnwYMJbdC0fwhRIHLZPCbj9Q523bB4+x3REKvqlJp+fcT6pYoK4+yDXQn+Xa8pGb6HCmdkliBN4eA=="],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.57.1", "", { "os": "android", "cpu": "arm" }, "sha512-A6ehUVSiSaaliTxai040ZpZ2zTevHYbvu/lDoeAteHI8QnaosIzm4qwtezfRg1jOYaUmnzLX1AOD6Z+UJjtifg=="],
 

@@ -2,21 +2,59 @@
 
 ## Vue d'ensemble
 
-OpenLetta est un terminal UI pour agents Letta. Il wrappe le `@letta-ai/letta-code-sdk` et affiche les interactions dans une interface Ink (React pour terminal).
+OpenLetta est un terminal UI pour agents Letta. Il utilise `@letta-ai/letta-code` pour accéder à l'API complète des messages Letta et affiche les interactions dans une interface Ink (React pour terminal).
 
-## Letta Code SDK — API Reference
+### Phase 1 (complétée)
+Implémentation du chat basique avec streaming de réponses textuelles.
 
-Le SDK est le package npm `@letta-ai/letta-code-sdk`. Il spawn le CLI `@letta-ai/letta-code` comme subprocess et communique via stdin/stdout JSON.
+### Phase 2 (en préparation)
+Migration vers `@letta-ai/letta-code` pour accéder aux types de messages détaillés (reasoning, tool_call, tool_return) et rendu riche des outils.
+
+## Letta Code — API Reference
+
+Le package npm `@letta-ai/letta-code` expose l'API complète du serveur Letta, permettant l'accès à tous les types de messages (reasoning, tool_call, tool_return, etc.).
+
+### Migration de letta-code-sdk à letta-code
+
+**Différences clés:**
+
+| Aspect | letta-code-sdk | letta-code |
+|--------|-----------------|-----------|
+| **Types de messages** | Limité (assistant, result) | Complet (6 types) |
+| **Tool calls** | Abstraits | Exposés (avec arguments) |
+| **Tool returns** | Non disponibles | Complètement disponibles |
+| **Reasoning** | Non exposé | Accessible en temps réel |
+| **Use case** | Chat simple | Interactions complexes, debugging |
+
+**Migration impact:**
+- ✅ Backward compatible (même interface de base)
+- ✅ Accès aux nouveaux types via le stream
+- ✅ ChatView affiche placeholders pour Phase 2
+- ✅ Types centralisés dans `src/types/letta.ts`
 
 ### Fonctions principales
 
 ```typescript
-import {
-  prompt,           // one-shot : envoie un prompt, retourne le résultat
-  createSession,    // crée une nouvelle conversation (nouvel agent ou agent existant)
-  resumeSession,    // reprend une conversation existante
-  createAgent,      // crée un nouvel agent avec config custom
-} from '@letta-ai/letta-code-sdk';
+import { Letta } from '@letta-ai/letta-code';
+
+// Initialiser le client
+const client = new Letta({
+  // auth auto-détectée depuis ~/.letta config
+});
+
+// Accéder aux agents
+const agents = client.agents;
+const agent = await agents.get(agentId);
+const agentNew = await agents.create(config);
+
+// Streamer les messages
+const stream = agents.messages.stream(agentId, conversationId, {
+  messages: [{ role: 'user', content: 'Hello' }]
+});
+
+for await (const msg of stream) {
+  console.log(msg.message_type); // 'reasoning_message', 'tool_call_message', etc.
+}
 ```
 
 ### prompt(text, agentId?)
@@ -82,29 +120,53 @@ const agentId = await createAgent({
 });
 ```
 
-### Types de messages dans le stream
+### Types de messages dans le stream (Phase 2+)
+
+Voir `docs/MESSAGE_TYPES.md` pour la documentation complète.
+
+Les 6 types disponibles via `@letta-ai/letta-code`:
 
 ```typescript
-// Messages streamés via session.stream()
-interface SDKAssistantMessage {
-  type: 'assistant';
-  content: string;    // texte de la réponse (peut arriver en chunks)
-  uuid: string;
+interface UserMessage {
+  message_type: 'user_message';
+  content: string;
 }
 
-interface SDKResultMessage {
-  type: 'result';
-  success: boolean;
-  result?: string;
-  error?: string;
-  durationMs: number;
-  conversationId: string;
+interface ReasoningMessage {
+  message_type: 'reasoning_message';
+  content: string;
 }
 
-// Note : le SDK actuel ne remonte que 'assistant' et 'result'.
-// Les tool_call_message / tool_return_message ne sont PAS exposés
-// par le SDK (ils le sont via le Letta TS Client directement).
-// C'est une limitation pour Phase 2 — on s'en occupe plus tard.
+interface AssistantMessage {
+  message_type: 'assistant_message';
+  content: string;
+}
+
+interface ApprovalRequestMessage {
+  message_type: 'approval_request_message';
+  tool_call: {
+    tool_call_id: string;
+    tool_name: string;
+    arguments: Record<string, unknown>;
+  };
+}
+
+interface ToolReturnMessage {
+  message_type: 'tool_return_message';
+  tool_call_id: string;
+  status: 'success' | 'error';
+  result: string;
+}
+
+interface UsageStatistics {
+  message_type: 'usage_statistics';
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+}
+
+type LettaMessage = UserMessage | ReasoningMessage | AssistantMessage
+                  | ApprovalRequestMessage | ToolReturnMessage | UsageStatistics;
 ```
 
 ### Flux standard d'utilisation
@@ -146,24 +208,31 @@ session.close();
 - `/clear` vide l'affichage mais PAS la mémoire
 - `/new` crée une nouvelle conversation (garde la mémoire agent)
 
-## Types Letta Server (pour référence future — Phase 2+)
+## Architecture OpenLetta — Composants Phase 2
 
-Le Letta Server renvoie ces types de messages lors du streaming :
+### Hooks
 
-```
-reasoning_message     → réflexion interne de l'agent
-assistant_message     → réponse textuelle visible
-tool_call_message     → l'agent appelle un outil (Bash, Read, etc.)
-tool_return_message   → résultat de l'exécution de l'outil
-usage_statistics      → tokens utilisés
-```
+- **useLettaSession.ts**: Wrapper `createSessionWrapper()` qui initialise le client Letta et expose une API compatible
+- **useStream.ts**: Consomme le stream et agrège les messages par type (reasoning, toolCalls, toolReturns)
 
-Séquence typique avec outils :
-```
-reasoning_message → tool_call_message → tool_return_message → reasoning_message → assistant_message
-```
+### Types
 
-Ces types ne sont pas directement accessibles via le SDK actuel. Pour y accéder, il faudra utiliser `@letta-ai/letta-client` directement (Phase 2).
+- **src/types/letta.ts**: Définitions TypeScript centralisées pour tous les types de messages
+
+### Composants (Phase 1)
+
+- **ChatView.tsx**: Affiche l'historique des messages + placeholders pour tools
+- **StreamRenderer.tsx**: Affiche le contenu en cours de streaming
+- **InputBar.tsx**: Input utilisateur
+- **StatusBar.tsx**: Informations agent + statut
+
+### Composants Phase 2 (à implémenter)
+
+- **ToolCallCard.tsx**: Container générique pour un appel outil
+- **BashOutput.tsx**: Rendu Bash avec couleurs ANSI
+- **FileRead.tsx**: Lecture de fichier avec syntax highlighting
+- **FileDiff.tsx**: Diff avec colorisation +/-
+- **FileWrite.tsx**: Opération d'écriture avec preview
 
 ## Interface OpenCode — Features à reproduire (par phase)
 
