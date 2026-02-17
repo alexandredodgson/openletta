@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import type { LettaSessionWrapper, LettaMessage, AppMode, ToolCallMessage } from '../types/letta.js';
+import type { LettaSessionWrapper, LettaMessage, AppMode, ToolCallMessage, Agent, Conversation } from '../types/letta.js';
 
 /**
  * Session wrapper that bridges Letta Code client API with UI requirements
@@ -21,7 +21,7 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
   });
 
   let currentAgentId = agentId;
-  let conversationId: string = `conv-${Date.now()}`;
+  let conversationId: string = 'default';
   let lastMessageStream: any = null;
 
   // Initialize agent if needed
@@ -47,13 +47,12 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
   }
 
   return {
-    agentId: currentAgentId!,
-    conversationId: conversationId,
+    get agentId() { return currentAgentId || ''; },
+    get conversationId() { return conversationId; },
 
     updateMode: async (newMode: AppMode) => {
       try {
         if (!currentAgentId) return;
-        console.log(`[Session] Official mode update: ${newMode.toUpperCase()}`);
 
         const toolsToRestrict = ['bash', 'Bash', 'edit', 'Edit', 'write', 'Write', 'edit_file', 'write_file'];
 
@@ -74,7 +73,7 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
             }
           }
         } catch (err) {
-          console.error('[Session] Tool approval update failed:', err);
+          // Non-critical error
         }
 
         try {
@@ -90,7 +89,7 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
             system: modeInstruction + baseSystem
           });
         } catch (err) {
-          console.error('[Session] System prompt update failed:', err);
+          // Non-critical error
         }
       } catch (error) {
         console.error('[Session] Error during updateMode:', error);
@@ -99,14 +98,18 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
 
     send: async (text: string, mode: AppMode = 'plan') => {
       try {
-        console.log(`[Session] Sending message in ${mode.toUpperCase()} mode`);
         const messageText = `[Context: ${mode.toUpperCase()} mode] ${text}`;
+        const options: any = {
+          messages: [{ role: 'user', content: messageText }],
+        };
+
+        if (conversationId && conversationId !== 'default') {
+          options.groupId = conversationId;
+        }
 
         let response: any = null;
         if (client.messages?.create) {
-          response = await client.messages.create(currentAgentId!, {
-            messages: [{ role: 'user', content: messageText }],
-          });
+          response = await client.messages.create(currentAgentId!, options);
         } else if (client.message?.send) {
           response = await client.message.send(currentAgentId!, messageText);
         } else {
@@ -151,6 +154,47 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
       }
     },
 
+    listAgents: async () => {
+      try {
+        const agents = await client.agents.list();
+        return agents.map((a: any) => ({ id: a.id, name: a.name }));
+      } catch (e) {
+        console.error('Failed to list agents:', e);
+        return [];
+      }
+    },
+
+    listConversations: async (agentId: string) => {
+      try {
+        // Try to list groups
+        const groups = await client.groups?.list?.();
+        if (groups && groups.length > 0) {
+          return groups.map((g: any) => ({ id: g.id, name: g.name }));
+        }
+      } catch (e) {
+        // Fallback or ignore
+      }
+      return [{ id: 'default', name: 'Main Chat' }];
+    },
+
+    getHistory: async (agentId: string, convId?: string) => {
+      try {
+        if (convId) conversationId = convId;
+        currentAgentId = agentId;
+
+        const params: any = { limit: 50, order: 'asc' };
+        if (conversationId && conversationId !== 'default') {
+          params.groupId = conversationId;
+        }
+
+        const messages = await client.agents.messages.list(currentAgentId, params);
+        return messages.map((m: any) => transformMessage(m, 'plan')).filter(Boolean) as LettaMessage[];
+      } catch (e) {
+        console.error('Failed to get history:', e);
+        return [];
+      }
+    },
+
     close: async () => {
       // Cleanup
     },
@@ -160,20 +204,20 @@ async function createSessionWrapper(agentId?: string): Promise<LettaSessionWrapp
 function transformMessage(msg: any, mode: AppMode): LettaMessage | null {
   if (!msg || typeof msg !== 'object') return null;
 
-  const type = msg.type || msg.message_type;
+  const type = msg.type || msg.message_type || (msg.role ? `${msg.role}_message` : '');
 
-  if (type === 'user_message') return { message_type: 'user_message', content: msg.content || '' };
+  if (type === 'user_message' || msg.role === 'user') return { message_type: 'user_message', content: msg.content || (Array.isArray(msg.content) ? msg.content[0]?.text : '') || '' };
   if (type === 'reasoning_message') return { message_type: 'reasoning_message', content: msg.content || '' };
-  if (type === 'assistant_message') return { message_type: 'assistant_message', content: msg.content || '' };
+  if (type === 'assistant_message' || msg.role === 'assistant') return { message_type: 'assistant_message', content: msg.content || (Array.isArray(msg.content) ? msg.content[0]?.text : '') || '' };
 
-  if (type === 'approval_request_message' || msg.tool_call) {
-    const toolCall = msg.tool_call || msg;
+  if (type === 'approval_request_message' || msg.tool_call || msg.messageType === 'tool_call_message') {
+    const toolCall = msg.tool_call || msg.toolCall || msg;
     const toolName = toolCall.tool_name || toolCall.name || '';
     const args = typeof toolCall.arguments === 'string'
       ? JSON.parse(toolCall.arguments)
-      : toolCall.arguments || {};
+      : (toolCall.arguments || toolCall.args || {});
 
-    // Step 2: Client-side guard for Plan mode
+    // Client-side guard for Plan mode
     let isBlocked = false;
     let blockReason = '';
 
@@ -182,7 +226,6 @@ function transformMessage(msg: any, mode: AppMode): LettaMessage | null {
       const isRestricted = restrictedTools.some(t => toolName.toLowerCase().includes(t.toLowerCase()));
 
       if (isRestricted) {
-        // Exception for bash dry-run
         const isBash = toolName.toLowerCase().includes('bash');
         const command = args.command || '';
         const isDryRun = command.includes('--dry-run');
@@ -208,13 +251,13 @@ function transformMessage(msg: any, mode: AppMode): LettaMessage | null {
     };
   }
 
-  if (type === 'tool_return_message' || msg.status) {
+  if (type === 'tool_return_message' || msg.status || msg.messageType === 'tool_return_message') {
     return {
       message_type: 'tool_return_message',
-      tool_call_id: msg.tool_call_id || '',
-      tool_name: msg.tool_name || '',
-      status: msg.status === 'success' ? 'success' : 'error',
-      result: msg.result || msg.output || '',
+      tool_call_id: msg.tool_call_id || msg.toolCallId || '',
+      tool_name: msg.tool_name || msg.toolName || '',
+      status: (msg.status === 'success' || msg.toolReturn) ? 'success' : 'error',
+      result: msg.result || msg.output || msg.toolReturn || '',
     };
   }
 

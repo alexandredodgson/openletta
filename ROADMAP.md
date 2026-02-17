@@ -30,11 +30,16 @@
 - **Animation visuelle** : Flash dans la StatusBar lors du changement de mode (Tab)
 - **Persistance du mode** entre les sessions via `conf`
 
----
-
 ## Phase 4 — Multi-session & sidebar
-**Statut** : 🚀 Prochaine étape
-**Objectif** : Gérer plusieurs conversations simultanément avec une sidebar de navigation.
+**Statut** : ✅ Terminé (2026-02-17)
+**Accomplissements** :
+- Sidebar navigable (25% de largeur) avec focus via Ctrl+S
+- Gestion multi-agents avec switch dynamique
+- Gestion multi-sessions (conversations) via les groupes Letta
+- Persistance de l'agent et de la conversation active via `conf`
+- Chargement automatique de l'historique lors du basculement
+
+---
 
 ## Phase 5 — Référencement fichiers (@)
 **Statut** : 🔜 Pas commencé
