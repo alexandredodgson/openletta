@@ -4,11 +4,12 @@
  * Props:
  * - agentId: string | null — current agent ID
  * - status: 'idle' | 'thinking' | 'streaming' | 'error'
+ * - mode: AppMode — current working mode (plan | build)
  * - error?: string — error message if status === 'error'
  *
  * Layout:
  * ┌──────────────────────────────────────────────────┐
- * │ 🤖 agent-abc123 │ ● streaming │ OpenLetta v0.1  │
+ * │ 🤖 agent-abc123  BUILD │ ● streaming │ OpenLetta │
  * └──────────────────────────────────────────────────┘
  *
  * Colors:
@@ -20,12 +21,14 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
+import type { AppMode } from '../types/letta.js';
 
 export type AppStatus = 'idle' | 'thinking' | 'streaming' | 'error';
 
 interface StatusBarProps {
   agentId: string | null;
   status: AppStatus;
+  mode: AppMode;
   error?: string;
 }
 
@@ -43,16 +46,25 @@ const STATUS_LABELS: Record<AppStatus, string> = {
   error: '✖ error',
 };
 
-export function StatusBar({ agentId, status, error }: StatusBarProps): React.ReactElement {
+export function StatusBar({ agentId, status, mode, error }: StatusBarProps): React.ReactElement {
   return (
     <Box borderStyle="single" borderColor="gray" paddingX={1} justifyContent="space-between">
-      <Text dimColor>
-        {agentId ? `🤖 ${agentId}` : '🤖 no agent'}
-      </Text>
+      <Box>
+        <Text dimColor>
+          {agentId ? `🤖 ${agentId}` : '🤖 no agent'}
+        </Text>
+        <Box marginLeft={2}>
+          <Text bold color={mode === 'build' ? 'red' : 'blue'}>
+            {mode.toUpperCase()}
+          </Text>
+        </Box>
+      </Box>
+
       <Text color={STATUS_COLORS[status]}>
         {STATUS_LABELS[status]}
         {error ? ` — ${error}` : ''}
       </Text>
+
       <Text dimColor>OpenLetta v0.1</Text>
     </Box>
   );

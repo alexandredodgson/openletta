@@ -3,18 +3,14 @@
  *
  * Props:
  * - onSubmit: (text: string) => void — called when user presses Enter
+ * - onToggleMode: () => void — called when user presses Tab
  * - disabled: boolean — true while streaming/thinking (prevents input)
  *
  * Behavior:
  * - Text input field at the bottom of the terminal
  * - Enter to submit, Shift+Enter for newline (if multiline needed)
+ * - Tab to toggle mode (Plan/Build)
  * - Clears input after submit
- * - Shows a prompt character (e.g., "> ") before the input
- * - When disabled, shows a dimmed placeholder like "Waiting for response..."
- *
- * Implementation:
- * - Use Ink's TextInput component (from 'ink-text-input' or Ink 5 built-in)
- * - Or use useInput hook for custom key handling
  */
 
 import React, { useState } from 'react';
@@ -22,10 +18,11 @@ import { Box, Text, useInput } from 'ink';
 
 interface InputBarProps {
   onSubmit: (text: string) => void;
+  onToggleMode?: () => void;
   disabled?: boolean;
 }
 
-export function InputBar({ onSubmit, disabled }: InputBarProps): React.ReactElement {
+export function InputBar({ onSubmit, onToggleMode, disabled }: InputBarProps): React.ReactElement {
   const [input, setInput] = useState('');
 
   useInput((inputChar, key) => {
@@ -37,6 +34,9 @@ export function InputBar({ onSubmit, disabled }: InputBarProps): React.ReactElem
         onSubmit(input);
         setInput('');
       }
+    } else if (key.tab) {
+      // Toggle mode on Tab
+      onToggleMode?.();
     } else if (key.backspace || key.delete) {
       // Handle backspace
       setInput((prev) => prev.slice(0, -1));

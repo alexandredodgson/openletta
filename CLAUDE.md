@@ -86,7 +86,7 @@ Ce projet se construit **brique par brique**. Consulte `ROADMAP.md` pour la prog
 - Phase 1 ✅ Complète et validée
 - Phase 2 préparation ✅ Complète (voir `PHASE2_PREP.md` et `PHASE2_CHECKLIST.md`)
 - Les types de messages et data flows sont en place
-- Prête pour l'implémentation des renderers (BashOutput, FileRead, FileDiff, FileWrite)
+- Implémentation des renderers terminée (BashOutput, FileRead, FileDiff, FileWrite)
 
 **Quand tu proposes une version à tester :**
 1. Assure-toi que ça compile (`bun run build`)
